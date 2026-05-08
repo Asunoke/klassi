@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GraduationCap, Eye, EyeOff, Mail, Lock, User, Building, Phone, Check } from "lucide-react"
+import { authClient } from "@/modules/auth/auth-client"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -17,25 +18,57 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
   const [accountType, setAccountType] = useState("")
+  const [error, setError] = useState("")
+
+  // Form State
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [phone, setPhone] = useState("")
+  
+  const [schoolName, setSchoolName] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (step === 1) {
+    
+    // Si c'est un compte école, on passe à l'étape 2
+    if (step === 1 && accountType === "school") {
       setStep(2)
       return
     }
     
     setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    router.push("/login")
-    setIsLoading(false)
+    setError("")
+
+    try {
+      const { data, error: signUpError } = await authClient.signUp.email({
+        email,
+        password,
+        name: `${firstName} ${lastName}`,
+      });
+
+      if (signUpError) {
+        setError(signUpError.message || "Failed to create account");
+        setIsLoading(false);
+        return;
+      }
+
+      // If it's a school, we should ideally create the school in the DB here
+      // For now, we redirect to login
+      router.push("/login")
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const passwordRequirements = [
-    { text: "At least 8 characters", met: true },
-    { text: "One uppercase letter", met: true },
-    { text: "One number", met: true },
-    { text: "One special character", met: false },
+    { text: "At least 8 characters", met: password.length >= 8 },
+    { text: "One uppercase letter", met: /[A-Z]/.test(password) },
+    { text: "One number", met: /[0-9]/.test(password) },
+    { text: "One special character", met: /[^A-Za-z0-9]/.test(password) },
   ]
 
   return (
@@ -56,13 +89,20 @@ export default function RegisterPage() {
               {step === 1 ? "Enter your information to get started" : "Complete your school registration"}
             </CardDescription>
             {/* Progress indicator */}
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <div className={`h-2 w-16 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
-              <div className={`h-2 w-16 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
-            </div>
+            {accountType === "school" && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <div className={`h-2 w-16 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
+                <div className={`h-2 w-16 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {error}
+                </div>
+              )}
               {step === 1 ? (
                 <>
                   <div className="space-y-2">
@@ -85,12 +125,12 @@ export default function RegisterPage() {
                       <Label htmlFor="firstName">First name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="firstName" placeholder="John" className="pl-10" required />
+                        <Input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="John" className="pl-10" required />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last name</Label>
-                      <Input id="lastName" placeholder="Doe" required />
+                      <Input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" required />
                     </div>
                   </div>
 
@@ -98,7 +138,7 @@ export default function RegisterPage() {
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="name@school.edu" className="pl-10" required />
+                      <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@school.edu" className="pl-10" required />
                     </div>
                   </div>
 
@@ -106,7 +146,7 @@ export default function RegisterPage() {
                     <Label htmlFor="phone">Phone number</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="phone" type="tel" placeholder="+234 800 000 0000" className="pl-10" required />
+                      <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+234 800 000 0000" className="pl-10" required />
                     </div>
                   </div>
 
@@ -117,6 +157,8 @@ export default function RegisterPage() {
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
                         placeholder="Create a strong password"
                         className="pl-10 pr-10"
                         required
@@ -147,7 +189,7 @@ export default function RegisterPage() {
                     <Label htmlFor="schoolName">School name</Label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="schoolName" placeholder="Lagos Academy" className="pl-10" required />
+                      <Input id="schoolName" value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder="Lagos Academy" className="pl-10" required />
                     </div>
                   </div>
 
@@ -204,22 +246,6 @@ export default function RegisterPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="referral">How did you hear about us?</Label>
-                    <Select>
-                      <SelectTrigger id="referral">
-                        <SelectValue placeholder="Select option (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="search">Search Engine</SelectItem>
-                        <SelectItem value="social">Social Media</SelectItem>
-                        <SelectItem value="referral">Referral from another school</SelectItem>
-                        <SelectItem value="conference">Conference/Event</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div className="flex items-start space-x-2 pt-2">
                     <Checkbox id="terms" required />
                     <Label htmlFor="terms" className="text-sm font-normal leading-snug">
@@ -239,7 +265,7 @@ export default function RegisterPage() {
                   </Button>
                 )}
                 <Button type="submit" className="flex-1" disabled={isLoading || (step === 1 && !accountType)}>
-                  {isLoading ? "Creating account..." : step === 1 ? "Continue" : "Create account"}
+                  {isLoading ? "Creating account..." : step === 1 && accountType === "school" ? "Continue" : "Create account"}
                 </Button>
               </div>
             </form>
@@ -257,3 +283,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+

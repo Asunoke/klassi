@@ -7,35 +7,41 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GraduationCap, Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { authClient } from "@/modules/auth/auth-client"
 
 export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [role, setRole] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
     
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect based on role
-    if (role === "admin") {
-      router.push("/dashboard/admin")
-    } else if (role === "teacher") {
-      router.push("/dashboard/teacher")
-    } else if (role === "student") {
-      router.push("/dashboard/student")
-    } else if (role === "parent") {
-      router.push("/dashboard/parent")
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message || "Failed to sign in");
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirection is handled globally or via /dashboard root
+      router.push("/dashboard")
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+      setIsLoading(false)
     }
-    
-    setIsLoading(false)
   }
 
   return (
@@ -58,21 +64,11 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="role">Sign in as</Label>
-                <Select value={role} onValueChange={setRole} required>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="parent">Parent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -80,6 +76,8 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@school.edu"
                     className="pl-10"
                     required
@@ -99,6 +97,8 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     className="pl-10 pr-10"
                     required
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 </Label>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || !role}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>

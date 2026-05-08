@@ -35,6 +35,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+import { QueryProvider } from '@/components/query-provider'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,7 +51,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <QueryProvider>
+            {children}
+          </QueryProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
