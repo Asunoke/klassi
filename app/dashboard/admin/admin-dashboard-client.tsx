@@ -11,6 +11,7 @@ import { Announcements } from "@/components/dashboard/announcements"
 import { Users, GraduationCap, BookOpen, TrendingUp, Loader2 } from "lucide-react"
 import { authClient } from "@/modules/auth/auth-client"
 import { useDashboardStats } from "@/hooks/use-dashboard-stats"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 
 export function AdminDashboardClient() {
   const { data: session, isPending: isSessionPending } = authClient.useSession()
@@ -26,14 +27,8 @@ export function AdminDashboardClient() {
   const activeClasses = stats?.activeClasses?.toLocaleString() || "..."
   const attendanceRate = stats?.attendanceRate ? `${stats.attendanceRate}%` : "..."
 
-  if (isSessionPending) {
-    return (
-      <DashboardLayout role="admin" title="Admin Dashboard">
-        <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    )
+  if (isSessionPending || isStatsLoading) {
+    return <DashboardSkeleton role="admin" title="Admin Dashboard" />
   }
 
   return (

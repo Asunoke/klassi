@@ -10,6 +10,7 @@ import { Announcements } from "@/components/dashboard/announcements"
 import { BookOpen, Users, FileCheck, Clock, Loader2 } from "lucide-react"
 import { authClient } from "@/modules/auth/auth-client"
 import { useDashboardStats } from "@/hooks/use-dashboard-stats"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 
 const classes = [
   { name: "Grade 10A", subject: "Mathematics", students: 32, schedule: "Mon, Wed, Fri", room: "201", progress: 75 },
@@ -31,14 +32,8 @@ export function TeacherDashboardClient() {
   const pendingGrades = stats?.pendingGrades?.toLocaleString() || "..."
   const classesToday = stats?.classesToday?.toLocaleString() || "..."
 
-  if (isSessionPending) {
-    return (
-      <DashboardLayout role="teacher" title="Teacher Dashboard">
-        <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    )
+  if (isSessionPending || isStatsLoading) {
+    return <DashboardSkeleton role="teacher" title="Teacher Dashboard" />
   }
 
   return (

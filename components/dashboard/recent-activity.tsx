@@ -1,6 +1,9 @@
 import { Bell, Users, FileText, Calendar, MessageSquare, BookOpen } from "lucide-react"
+import { EmptyState } from "./empty-state"
 
-const activities = [
+const activities: any[] = [
+  /* 
+  Uncomment for dummy data 
   {
     id: 1,
     icon: Users,
@@ -9,53 +12,29 @@ const activities = [
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
-  {
-    id: 2,
-    icon: Bell,
-    text: "New announcement posted: Term 2 Schedule",
-    time: "1 hour ago",
-    color: "text-accent",
-    bgColor: "bg-accent/10",
-  },
-  {
-    id: 3,
-    icon: FileText,
-    text: "Grade reports generated for Form 3",
-    time: "2 hours ago",
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
-  },
-  {
-    id: 4,
-    icon: Calendar,
-    text: "Parent-teacher meeting scheduled",
-    time: "3 hours ago",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    id: 5,
-    icon: MessageSquare,
-    text: "Mrs. Okonkwo sent a message",
-    time: "4 hours ago",
-    color: "text-accent",
-    bgColor: "bg-accent/10",
-  },
-  {
-    id: 6,
-    icon: BookOpen,
-    text: "New class created: Advanced Mathematics",
-    time: "5 hours ago",
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
-  },
+  */
 ]
 
 export function RecentActivity() {
+  if (activities.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 h-full flex flex-col">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
+        <div className="flex-1 flex flex-col justify-center">
+          <EmptyState 
+            icon={Bell} 
+            title="No recent activity" 
+            description="Things are quiet right now. When students enroll or teachers are added, you'll see it here." 
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border bg-card p-6 h-full flex flex-col">
       <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         {activities.map((activity) => (
           <div key={activity.id} className="flex items-start gap-3">
             <div className={`w-9 h-9 rounded-lg ${activity.bgColor} flex items-center justify-center shrink-0`}>

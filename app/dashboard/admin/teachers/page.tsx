@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Search, Plus, MoreHorizontal, Mail, Phone, Users, BookOpen, Award, Clock } from "lucide-react"
+
+import { CreateTeacherForm } from "@/components/dashboard/admin/forms/create-teacher-form"
+import { authClient } from "@/modules/auth/auth-client"
 
 const teachers = [
   { id: "TCH001", name: "Dr. Ngozi Adichie", email: "ngozi.a@school.edu", phone: "+234 801 234 5678", department: "Sciences", subjects: ["Physics", "Mathematics"], classes: 4, students: 120, status: "Active", yearsExp: 12 },
@@ -22,8 +24,12 @@ const teachers = [
 ]
 
 export default function TeachersPage() {
+  const { data: session } = authClient.useSession()
+  const schoolId = (session?.user as any)?.schoolId as string | undefined
+
   const [searchQuery, setSearchQuery] = useState("")
   const [departmentFilter, setDepartmentFilter] = useState("all")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const filteredTeachers = teachers.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,7 +46,7 @@ export default function TeachersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Teachers</h1>
           <p className="text-muted-foreground">Manage your teaching staff</p>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -52,44 +58,17 @@ export default function TeachersPage() {
               <DialogTitle>Add New Teacher</DialogTitle>
               <DialogDescription>Send an invitation to join your school on Klassi.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="teacherFirst">First name</Label>
-                  <Input id="teacherFirst" placeholder="Enter first name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="teacherLast">Last name</Label>
-                  <Input id="teacherLast" placeholder="Enter last name" />
-                </div>
+            
+            {schoolId ? (
+              <CreateTeacherForm 
+                schoolId={schoolId} 
+                onSuccess={() => setIsDialogOpen(false)} 
+              />
+            ) : (
+              <div className="py-4 text-center text-sm text-muted-foreground">
+                Loading session data...
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacherEmail">Email</Label>
-                <Input id="teacherEmail" type="email" placeholder="teacher@school.edu" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacherPhone">Phone</Label>
-                <Input id="teacherPhone" type="tel" placeholder="+234 800 000 0000" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacherDept">Department</Label>
-                <Select>
-                  <SelectTrigger id="teacherDept">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sciences">Sciences</SelectItem>
-                    <SelectItem value="languages">Languages</SelectItem>
-                    <SelectItem value="humanities">Humanities</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="arts">Arts</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Send Invitation</Button>
-            </DialogFooter>
+            )}
           </DialogContent>
         </Dialog>
       </div>

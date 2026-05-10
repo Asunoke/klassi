@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Search, Plus, MoreHorizontal, Download, Upload, Filter, Users, GraduationCap, UserCheck, AlertCircle } from "lucide-react"
+
+import { CreateStudentForm } from "@/components/dashboard/admin/forms/create-student-form"
+import { authClient } from "@/modules/auth/auth-client"
 
 const students = [
   { id: "STU001", name: "Adaeze Okonkwo", email: "adaeze.o@school.edu", class: "SS3 Science", gender: "Female", status: "Active", gpa: 3.8, attendance: 96 },
@@ -25,9 +27,13 @@ const students = [
 ]
 
 export default function StudentsPage() {
+  const { data: session } = authClient.useSession()
+  const schoolId = (session?.user as any)?.schoolId as string | undefined
+
   const [searchQuery, setSearchQuery] = useState("")
   const [classFilter, setClassFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,7 +60,7 @@ export default function StudentsPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -66,59 +72,17 @@ export default function StudentsPage() {
                 <DialogTitle>Add New Student</DialogTitle>
                 <DialogDescription>Enter the student details below to create a new record.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First name</Label>
-                    <Input id="firstName" placeholder="Enter first name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last name</Label>
-                    <Input id="lastName" placeholder="Enter last name" />
-                  </div>
+              
+              {schoolId ? (
+                <CreateStudentForm 
+                  schoolId={schoolId} 
+                  onSuccess={() => setIsDialogOpen(false)} 
+                />
+              ) : (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Loading session data...
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentEmail">Email</Label>
-                  <Input id="studentEmail" type="email" placeholder="student@school.edu" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="studentClass">Class</Label>
-                    <Select>
-                      <SelectTrigger id="studentClass">
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ss3-science">SS3 Science</SelectItem>
-                        <SelectItem value="ss3-arts">SS3 Arts</SelectItem>
-                        <SelectItem value="ss2-science">SS2 Science</SelectItem>
-                        <SelectItem value="ss2-commercial">SS2 Commercial</SelectItem>
-                        <SelectItem value="ss1-science">SS1 Science</SelectItem>
-                        <SelectItem value="jss3">JSS3</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select>
-                      <SelectTrigger id="gender">
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardianEmail">Guardian email</Label>
-                  <Input id="guardianEmail" type="email" placeholder="guardian@email.com" />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Add Student</Button>
-              </DialogFooter>
+              )}
             </DialogContent>
           </Dialog>
         </div>
